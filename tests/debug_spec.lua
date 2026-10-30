@@ -1,5 +1,5 @@
 ---@diagnostic disable: undefined-global, undefined-field
--- Unit tests for the `debug` type's `parameters`. debugger, absent here, and its
+-- Unit tests for the `debug` type's `parameters`. ndap, absent here, and its
 -- input reader are stubbed.
 
 local config      = require("neotasks.config")
@@ -25,7 +25,7 @@ local MODE = {
     description = "launch the program",
 }
 
---- Value reading as `debugger.run.inputs.read` documents it.
+--- Value reading as `ndap.run.inputs.read` documents it.
 local ENTRY_READER = {
     read = function(input, value)
         local entry_type = input.item_type or input.type or "string"
@@ -71,11 +71,11 @@ local ran
 local reported
 
 local fake_debugger = {
-    -- debugger's built-in `remote` is always among them; listing it keeps the type's
-    -- "not a registered debugger adapter" warning out of the output.
+    -- ndap's built-in `remote` is always among them; listing it keeps the type's
+    -- "not a registered ndap adapter" warning out of the output.
     available_adapters = function() return { ADAPTER, "remote" } end,
     is_setup           = function() return true end,
-    -- Only the fake adapter declares modes; `remote` is listed (as debugger always
+    -- Only the fake adapter declares modes; `remote` is listed (as ndap always
     -- lists it) but contributes no branch to the schema.
     mode_required      = function(adapter)
         return adapter == ADAPTER and { "program" } or {}
@@ -89,7 +89,7 @@ local fake_debugger = {
     mode               = function(adapter)
         return adapter == ADAPTER and MODE or nil
     end,
-    -- The starting value debugger scaffolds for an input. Templates seed required
+    -- The starting value ndap scaffolds for an input. Templates seed required
     -- parameters from it when the adapter has no `target` expander.
     input_seed         = function(input)
         if input and input.type == "list" then return {} end
@@ -122,13 +122,13 @@ end
 --- required lazily, so replacing them here reaches the type's runs and schema.
 ---@param fn fun()
 local function with_debugger(fn)
-    stubbed("debugger", fake_debugger, function()
-        stubbed("debugger.run.inputs", ENTRY_READER, fn)
+    stubbed("ndap", fake_debugger, function()
+        stubbed("ndap.run.inputs", ENTRY_READER, fn)
     end)
 end
 
 --- Drive one `debug` start with `parameters` and `target`, through the stubs.
---- Returns whether the run settled without debugger, and what `start_mode` was handed.
+--- Returns whether the run settled without ndap, and what `start_mode` was handed.
 ---@param parameters table<string, any>?
 ---@param target string?
 ---@return boolean? settled, table? run
@@ -507,7 +507,7 @@ describe("debug schema – list inputs", function()
     before_each(function() config.current.debug_adapters = { ADAPTER } end)
     after_each(function() config.current.debug_adapters = {} end)
 
-    --- The property schema for `name`, built through the stubbed debugger.
+    --- The property schema for `name`, built through the stubbed ndap.
     ---@param name string
     ---@return table
     local function prop(name)

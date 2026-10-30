@@ -15,8 +15,8 @@ local function _warn_once(key, msg)
 end
 
 --- The adapters the `debug` type may use: the ones named in
---- `setup{ debug_adapters = … }`, kept to those debugger has registered, plus
---- debugger's built-in `remote` adapter, which is always included. Only these get
+--- `setup{ debug_adapters = … }`, kept to those ndap has registered, plus
+--- ndap's built-in `remote` adapter, which is always included. Only these get
 --- their definition loaded for the schema and templates.
 ---@return string[]
 function M.adapters()
@@ -27,7 +27,7 @@ function M.adapters()
 
     -- The registered names, which cost no adapter load.
     local available = {}
-    for _, name in ipairs(require("debugger").available_adapters()) do
+    for _, name in ipairs(require("ndap").available_adapters()) do
         available[name] = true
     end
 
@@ -36,14 +36,14 @@ function M.adapters()
         if available[name] then
             out[#out + 1] = name
         else
-            _warn_once(name, ("debug_adapters: %q is not a registered debugger adapter"):format(name))
+            _warn_once(name, ("debug_adapters: %q is not a registered ndap adapter"):format(name))
         end
     end
     return out
 end
 
 --- The JSON Schema a scalar input's authored value is typed as, by its
---- `debugger.InputType` name. A collection's entries are read as scalars too, so
+--- `ndap.InputType` name. A collection's entries are read as scalars too, so
 --- both slots (a scalar's `type`, a collection's `item_type`) land on one of
 --- these. An absent or unknown name is `string`, the type an input defaults to.
 ---@type table<string, table>
@@ -87,7 +87,7 @@ end
 --- here. A `list` is an array, a `map` an object, their entries typed by
 --- `item_type`; `completion` describes one entry either way, and only a
 --- written-out set of values can be shown, as `examples`.
----@param input debugger.Input?
+---@param input ndap.Input?
 ---@return table
 local function _input_schema(input)
     input            = input or {}
@@ -112,16 +112,16 @@ end
 
 --- The `parameters` object schema for one (adapter, mode): one property per
 --- input the mode declares, described with the input's own `description` and
---- typed in the authored form `_input_schema` derives from `debugger.Input`.
----@param debugger debugger.Module
+--- typed in the authored form `_input_schema` derives from `ndap.Input`.
+---@param ndap ndap.Module
 ---@param adapter string
 ---@param mode_name string
 ---@return table
-local function _parameters_schema(debugger, adapter, mode_name)
-    local inputs = debugger.mode_inputs(adapter, mode_name)
+local function _parameters_schema(ndap, adapter, mode_name)
+    local inputs = ndap.mode_inputs(adapter, mode_name)
     -- A `target` expander may fill any of these at start time, so none is
-    -- required here; debugger still reports a value neither form supplied.
-    local required = M.target_expander(adapter) and {} or debugger.mode_required(adapter, mode_name)
+    -- required here; ndap still reports a value neither form supplied.
+    local required = M.target_expander(adapter) and {} or ndap.mode_required(adapter, mode_name)
 
     local props    = {}
     for name, input in pairs(inputs) do
@@ -139,16 +139,16 @@ local function _parameters_schema(debugger, adapter, mode_name)
 end
 
 --- A `mode` property schema listing an adapter's mode names,
---- with each name's `description` (from debugger) attached so the LSP can show
+--- with each name's `description` (from ndap) attached so the LSP can show
 --- it on completion/hover.
----@param debugger debugger.Module
+---@param ndap ndap.Module
 ---@param adapter string
 ---@param mode_names string[]
 ---@return table
-local function _mode_name_schema(debugger, adapter, mode_names)
+local function _mode_name_schema(ndap, adapter, mode_names)
     local one_of = {}
     for _, mode_name in ipairs(mode_names) do
-        local mode = debugger.mode(adapter, mode_name)
+        local mode = ndap.mode(adapter, mode_name)
         one_of[#one_of + 1] = {
             const       = mode_name,
             description = mode and mode.description,
@@ -165,11 +165,11 @@ end
 --- (adapter, mode) `parameters` branches inside its own `then`, so the
 --- navigator walks only the matched adapter's modes. An adapter declaring no
 --- modes gets no branch: an empty `mode` oneOf would reject every value.
----@param debugger debugger.Module
+---@param ndap ndap.Module
 ---@param adapter string
 ---@return table?
-local function _adapter_branch(debugger, adapter)
-    local mode_names = debugger.mode_names(adapter)
+local function _adapter_branch(ndap, adapter)
+    local mode_names = ndap.mode_names(adapter)
     if #mode_names == 0 then return nil end
 
     local mode_branches = {}
@@ -184,7 +184,7 @@ local function _adapter_branch(debugger, adapter)
             },
             ["then"] = {
                 properties = {
-                    parameters = _parameters_schema(debugger, adapter, mode_name),
+                    parameters = _parameters_schema(ndap, adapter, mode_name),
                 },
             },
         }
@@ -193,7 +193,7 @@ local function _adapter_branch(debugger, adapter)
     -- `target` is per adapter, not per mode: one expander receives the mode in
     -- its context and decides what the string means there.
     local then_properties = {
-        mode = _mode_name_schema(debugger, adapter, mode_names),
+        mode = _mode_name_schema(ndap, adapter, mode_names),
     }
     if M.target_expander(adapter) then
         then_properties.target = _target_schema(adapter)
@@ -213,27 +213,27 @@ local function _adapter_branch(debugger, adapter)
 end
 
 --- The per-adapter branches, for every adapter that declares modes.
----@param debugger debugger.Module
+---@param ndap ndap.Module
 ---@param adapters string[]  the configured adapter names
 ---@return table[]
-local function _mode_branches(debugger, adapters)
+local function _mode_branches(ndap, adapters)
     local branches = {}
     for _, adapter in ipairs(adapters) do
-        branches[#branches + 1] = _adapter_branch(debugger, adapter)
+        branches[#branches + 1] = _adapter_branch(ndap, adapter)
     end
     return branches
 end
 
 --- The `debug` task schema. neotasks owns only the framework fields; the
 --- vocabulary of a mode's inputs is defined entirely under `parameters`, projected
---- from debugger's per-adapter named modes. `parameters` holds those inputs in the
+--- from ndap's per-adapter named modes. `parameters` holds those inputs in the
 --- authored form, not the DAP launch/attach body: a mode's `build` is what turns
 --- them into that body, which a task never spells out.
 ---@return table
 local function _schema()
-    local debugger          = require("debugger")
+    local ndap          = require("ndap")
     local adapters      = M.adapters()
-    local mode_branches = _mode_branches(debugger, adapters)
+    local mode_branches = _mode_branches(ndap, adapters)
 
     if vim.tbl_isempty(mode_branches) then
         return {
@@ -286,11 +286,11 @@ end
 
 --- A value the expander returned, read as its input's type.
 ---@param name string
----@param input debugger.Input
+---@param input ndap.Input
 ---@param value any
 ---@return string? err
 local function _validate_value(name, input, value)
-    local _, err = require("debugger.run.inputs").read(input, value)
+    local _, err = require("ndap.run.inputs").read(input, value)
     if err then return ("target function returned %q: %s"):format(name, err) end
     return nil
 end
@@ -338,9 +338,9 @@ function M.apply_target(expand, target, ctx)
     return out
 end
 
---- Each live run's debugger run handle, by run id, so disposing a run can drop what
---- it left in debugger. Entries are dropped as the runs are disposed.
----@type table<integer, debugger.runner.Run>
+--- Each live run's ndap run handle, by run id, so disposing a run can drop what
+--- it left in ndap. Entries are dropped as the runs are disposed.
+---@type table<integer, ndap.runner.Run>
 local _debugger_runs = {}
 
 ---@param task    neotasks.DebugTask
@@ -348,9 +348,9 @@ local _debugger_runs = {}
 ---@param on_done fun(ok: boolean)
 ---@return fun()
 function M.start(task, ctx, on_done)
-    -- Listing adapters needs no debugger setup(), but running one does.
-    if not require("debugger").is_setup() then
-        ctx.report("require('debugger').setup() has not been called")
+    -- Listing adapters needs no ndap setup(), but running one does.
+    if not require("ndap").is_setup() then
+        ctx.report("require('ndap').setup() has not been called")
         on_done(false)
         return function() end
     end
@@ -363,7 +363,7 @@ function M.start(task, ctx, on_done)
         return function() end
     end
 
-    local debugger = require("debugger")
+    local ndap = require("ndap")
 
     -- A `target` string is expanded into the mode's inputs by its adapter's
     -- configured function; a failure stops before a session exists.
@@ -374,7 +374,7 @@ function M.start(task, ctx, on_done)
             adapter    = task.adapter,
             mode       = task.mode,
             parameters = vim.deepcopy(task.parameters or {}),
-            inputs     = debugger.mode_inputs(task.adapter, task.mode),
+            inputs     = ndap.mode_inputs(task.adapter, task.mode),
         })
     if target_err then
         ctx.report(target_err)
@@ -382,19 +382,19 @@ function M.start(task, ctx, on_done)
         return function() end
     end
 
-    -- debugger resolves the mode and runs the session; we present the run. Its
+    -- ndap resolves the mode and runs the session; we present the run. Its
     -- buffers, its progress and its outcome arrive through these callbacks,
-    -- and debugger's own panels never see it. A mode's `build` may prompt the user
+    -- and ndap's own panels never see it. A mode's `build` may prompt the user
     -- first, so the run can still be resolving here; `cancel` calls that off
     -- too.
-    local run = require("debugger").start_mode(task.adapter, task.mode, parameters, {
+    local run = require("ndap").start_mode(task.adapter, task.mode, parameters, {
         name      = ctx.name,
         add_bufnr = ctx.add_bufnr,
         report    = ctx.report,
         on_done   = on_done,
     })
 
-    -- Only a bad adapter or mode name leaves no run, and debugger has reported it.
+    -- Only a bad adapter or mode name leaves no run, and ndap has reported it.
     if not run then
         on_done(false)
         return function() end
@@ -404,14 +404,14 @@ function M.start(task, ctx, on_done)
     return function() run.cancel() end
 end
 
---- Delete the run's buffers and let debugger drop what the run left in its own UI.
+--- Delete the run's buffers and let ndap drop what the run left in its own UI.
 --- A run that never got as far as starting has no handle to drop.
 ---@param run_id integer
 ---@param bufnrs neotasks.BufEntry[]
 function M.dispose(run_id, bufnrs)
     local run = _debugger_runs[run_id]
     _debugger_runs[run_id] = nil
-    if run then require("debugger").remove_run(run) end
+    if run then require("ndap").remove_run(run) end
 
     for _, be in ipairs(bufnrs) do
         if vim.api.nvim_buf_is_valid(be.bufnr) then

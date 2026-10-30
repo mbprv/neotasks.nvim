@@ -1,8 +1,8 @@
 ---@brief Health check for neotasks.nvim. Run with `:checkhealth neotasks`.
 ---
----Reports the Neovim version and the optional companion plugin (debugger), whether
+---Reports the Neovim version and the optional companion plugin (ndap), whether
 ---`setup()` has run, the options that differ from the defaults, the tasks file
----found for the cwd, and the registered task types (with the debugger adapters the
+---found for the cwd, and the registered task types (with the ndap adapters the
 ---`debug` type may use).
 
 local M = {}
@@ -32,15 +32,15 @@ local function _check_requirements()
         health.error("neotasks.nvim requires Neovim >= 0.11")
     end
 
-    -- Optional. debugger names its adapters without a setup(), but a `debug` task
+    -- Optional. ndap names its adapters without a setup(), but a `debug` task
     -- cannot start before one.
-    if not pcall(require, "debugger") then
-        health.info("debugger.nvim is not installed, so there is no `debug` task type")
-    elseif require("debugger").is_setup() then
-        health.ok("debugger.nvim is installed and set up (the `debug` task type is available)")
+    if not pcall(require, "ndap") then
+        health.info("ndap.nvim is not installed, so there is no `debug` task type")
+    elseif require("ndap").is_setup() then
+        health.ok("ndap.nvim is installed and set up (the `debug` task type is available)")
     else
-        health.warn("debugger.nvim is installed but require('debugger').setup() has not been called", {
-            "Call require('debugger').setup() from your config; until then no `debug` task can start",
+        health.warn("ndap.nvim is installed but require('ndap').setup() has not been called", {
+            "Call require('ndap').setup() from your config; until then no `debug` task can start",
         })
     end
 end
@@ -162,15 +162,15 @@ local function _check_qfmatchers()
     end
 end
 
----Report the debugger adapters the `debug` type may use. `debug_adapters` is
----resolved against debugger's registry: only those get a definition loaded, and a
+---Report the ndap adapters the `debug` type may use. `debug_adapters` is
+---resolved against ndap's registry: only those get a definition loaded, and a
 ---task on any other adapter refuses to start.
 local function _check_debug_adapters()
     local wanted = require("neotasks.config").current.debug_adapters or {}
     if #wanted == 0 then
         health.warn("`debug_adapters` is empty, so only the built-in `remote` adapter is available", {
             "List the adapters you use, e.g. debug_adapters = { 'codelldb' }",
-            "See the names available with :lua =require('debugger').available_adapters()",
+            "See the names available with :lua =require('ndap').available_adapters()",
         })
         return
     end
@@ -178,7 +178,7 @@ local function _check_debug_adapters()
     local ok, usable = pcall(require("neotasks.types.debug").adapters)
     if not ok then
         health.warn(("`debug_adapters` cannot be resolved: %s"):format(tostring(usable)), {
-            "Run :checkhealth debugger",
+            "Run :checkhealth ndap",
         })
         return
     end
@@ -186,8 +186,8 @@ local function _check_debug_adapters()
 
     for _, name in ipairs(wanted) do
         if not vim.tbl_contains(usable, name) then
-            health.error(("`%s` is not a registered debugger adapter"):format(name), {
-                "See the names available with :lua =require('debugger').available_adapters()",
+            health.error(("`%s` is not a registered ndap adapter"):format(name), {
+                "See the names available with :lua =require('ndap').available_adapters()",
             })
         end
     end

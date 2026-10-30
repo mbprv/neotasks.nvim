@@ -735,7 +735,7 @@ describe("completion – x-completionType registry consistency", function()
         -- Shared base fields, including depends_on and other dynamic fields.
         walk(require("neotasks.types.schema").base_properties)
         -- Plus each task type's own static schema fragment. Best effort: a type
-        -- whose schema needs an unavailable backend (e.g. `debug` → debugger) is
+        -- whose schema needs an unavailable backend (e.g. `debug` → ndap) is
         -- skipped rather than failing the whole suite in a bare environment.
         for _, tname in ipairs(types.get_names()) do
             local ok, def = pcall(types.get, tname)

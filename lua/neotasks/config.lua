@@ -24,7 +24,7 @@ local M = {}
 ---@field adapter    string
 ---@field mode       string
 ---@field parameters table<string, any>   the authored parameters, before the target fills any
----@field inputs     table<string, debugger.Input>  the mode's declared inputs
+---@field inputs     table<string, ndap.Input>  the mode's declared inputs
 
 ---Expands a debug task's `target` string into input values. Return a table
 ---keyed by the mode's input names; a value already written under `parameters`
@@ -34,7 +34,7 @@ local M = {}
 ---@class neotasks.Config
 ---@field tasks_filename     string
 ---@field lsp_debug_commands boolean enable LSP debug dump requests (`:Neotasks lsp_dump`)
----@field debug_adapters     string[] debugger adapters the `debug` task type may use
+---@field debug_adapters     string[] ndap adapters the `debug` task type may use
 ---@field debug_targets      table<string, neotasks.DebugTarget> per-adapter expanders for a debug task's `target`
 ---@field panel              neotasks.Config.Panel  the task-output panel
 
@@ -42,8 +42,8 @@ local M = {}
 local defaults = {
     tasks_filename     = "neotasks.toml",
     lsp_debug_commands = false,
-    -- Only the adapters named here (plus debugger's built-in `remote`, always
-    -- included) are loaded from debugger (for performance)
+    -- Only the adapters named here (plus ndap's built-in `remote`, always
+    -- included) are loaded from ndap (for performance)
     debug_adapters     = {},
     -- Per-adapter functions turning a debug task's `target` into input values.
     -- A `debug` task only has a `target` field for an adapter listed here.
