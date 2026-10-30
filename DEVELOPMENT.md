@@ -50,7 +50,7 @@ make test BUSTED_ARGS="--filter=runner -o gtest"
 
 The TOML parser/decoder/encoder/validator/formatter and the schema navigation
 the LSP uses are in the separate
-[`tomltools`](https://github.com/mbfoss/tomltools) repository, vendored here as
+[`tomltools`](https://github.com/<owner>/tomltools) repository, vendored here as
 a **git subtree** (not a submodule), so a fresh clone needs no extra fetch.
 
 ### Why it is namespaced under `neotasks.`

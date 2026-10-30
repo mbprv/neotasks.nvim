@@ -43,7 +43,7 @@ window, and completion and diagnostics in the tasks file.
     project root. The presence of this file marks a directory as a project.
 - **Built-in task types**: a program directly (`process`), through a shell
     (`shell`), a group of other tasks (`composite`), or a debug session
-    (`debug`, via debugger.nvim <https://github.com/mbfoss/debugger.nvim>).
+    (`debug`, via debugger.nvim <https://github.com/<owner>/debugger.nvim>).
 - **Task dependencies**: `depends_on`, run in `sequence` or `parallel` before
     the task itself.
 - **Concurrency policy**: `wait`, `restart`, `refuse`, or `parallel` when a
@@ -63,7 +63,7 @@ window, and completion and diagnostics in the tasks file.
 2. Requirements                                        *neotasks-requirements*
 
 - Neovim >= 0.11
-- debugger.nvim <https://github.com/mbfoss/debugger.nvim>: _optional_, required
+- debugger.nvim <https://github.com/<owner>/debugger.nvim>: _optional_, required
     only for the `debug` task type.
 
 
@@ -74,8 +74,8 @@ window, and completion and diagnostics in the tasks file.
 
 >lua
     vim.pack.add({
-      -- { src = "https://github.com/mbfoss/debugger.nvim" }, -- optional, only for `debug` tasks
-      { src = "https://github.com/mbfoss/neotasks.nvim" },
+      -- { src = "https://github.com/<owner>/debugger.nvim" }, -- optional, only for `debug` tasks
+      { src = "https://github.com/<owner>/neotasks.nvim" },
     })
     
     -- require("debugger").setup()
@@ -86,9 +86,9 @@ lazy.nvim <https://github.com/folke/lazy.nvim>:
 
 >lua
     {
-      "mbfoss/neotasks.nvim",
+      "<owner>/neotasks.nvim",
       -- optional, only for `debug` tasks:
-      -- dependencies = { "mbfoss/debugger.nvim" },
+      -- dependencies = { "<owner>/debugger.nvim" },
       lazy = false, -- setup() creates :Neotasks and the tasks-file support
       opts = {},
     }
@@ -243,7 +243,7 @@ This type has no command. It groups other tasks through its dependencies. Use
 
 DEBUG                                                         *neotasks-debug*
 
-A debug session through debugger.nvim <https://github.com/mbfoss/debugger.nvim>.
+A debug session through debugger.nvim <https://github.com/<owner>/debugger.nvim>.
 
 - Available **only when debugger.nvim is installed**; without it neotasks works
     normally and offers no `debug` type.

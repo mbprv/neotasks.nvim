@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Update the vendored TOML engine (lua/neotasks/tomltools) from upstream
-# https://github.com/mbfoss/tomltools.
+# https://github.com/<owner>/tomltools.
 #
 # Upstream ships its library at lua/tomltools/, and its modules require each
 # other by the bare name `tomltools.*`. Vendoring it at that bare path would make
@@ -30,7 +30,7 @@ set -euo pipefail
 
 # --- Configuration -----------------------------------------------------------
 REMOTE_NAME="tomltools"
-REMOTE_URL="https://github.com/mbfoss/tomltools.git"
+REMOTE_URL="https://github.com/<owner>/tomltools.git"
 UPSTREAM_SUBDIR="lua/tomltools"          # upstream path of the library
 VENDOR_DIR="lua/neotasks/tomltools"     # vendored path in this plugin
 LOCK_FILE="scripts/tomltools.lock"
